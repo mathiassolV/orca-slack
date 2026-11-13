@@ -80,13 +80,21 @@ export default function activate(orca: OrcaWorkerApi): void {
   }
 
   orca.commands.register('slack.open', async () => {
-    const tab = findSlackTab(await listTabs())
-    if (tab) {
-      await orcaCli(['tab', 'switch', '--page', tab.browserPageId, '--worktree', `id:${tab.worktreeId}`, '--focus'])
-    } else {
-      await orcaCli(['tab', 'create', '--url', SLACK_URL, '--worktree', 'active'])
+    orca.log('slack.open: start')
+    try {
+      const tab = findSlackTab(await listTabs())
+      if (tab) {
+        await orcaCli(['tab', 'switch', '--page', tab.browserPageId, '--worktree', `id:${tab.worktreeId}`, '--focus'])
+      } else {
+        await orcaCli(['tab', 'create', '--url', SLACK_URL, '--worktree', 'active'])
+      }
+      setTimeout(poll, 1500)
+      orca.log('slack.open: done')
+      return 'Opened Slack'
+    } catch (e) {
+      orca.log(`slack.open failed: ${(e as Error).message}`)
+      return `Could not open Slack: ${(e as Error).message}`
     }
-    setTimeout(poll, 1500)
   })
 
   void poll()
