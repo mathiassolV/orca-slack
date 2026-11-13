@@ -1,0 +1,33 @@
+{
+  "manifestVersion": 2,
+  "id": "slack",
+  "name": "Slack",
+  "version": "0.1.0",
+  "description": "Slack unread count in the status bar, notifications, and a shortcut that opens Slack in Orca's browser.",
+  "engines": {
+    "orca": ">=1.4.248"
+  },
+  "execution": "trusted-worker",
+  "pluginApi": 1,
+  "main": "src/worker.ts",
+  "contributes": {
+    "commands": [
+      { "id": "slack.open", "title": "Slack: Open in Orca browser" }
+    ],
+    "keybindings": [
+      { "command": "slack.open", "key": "Mod+Shift+L" }
+    ],
+    "statusBarItems": [
+      {
+        "id": "slack",
+        "text": "Slack",
+        "icon": "bell",
+        "tooltip": "Open Slack",
+        "command": "slack.open"
+      }
+    ]
+  },
+  "capabilities": [
+    { "kind": "notifications:show" }
+  ]
+}
