@@ -28,7 +28,7 @@ delete childEnv.ELECTRON_RUN_AS_NODE
 
 function orcaCli(args: string[]): Promise<any> {
   return new Promise((resolve, reject) => {
-    execFile(ORCA, [...args, '--json'], { env: childEnv, windowsHide: true, timeout: 15000 }, (err, stdout, stderr) => {
+    execFile(ORCA, [...args, '--json'], { env: childEnv, cwd: home, windowsHide: true, timeout: 15000 }, (err, stdout, stderr) => {
       if (err && !stdout) return reject(new Error(`${err.message} ${stderr}`.trim()))
       try {
         const out = JSON.parse(stdout)
@@ -86,13 +86,22 @@ export default function activate(orca: OrcaWorkerApi): void {
       if (tab) {
         await orcaCli(['tab', 'switch', '--page', tab.browserPageId, '--worktree', `id:${tab.worktreeId}`, '--focus'])
       } else {
-        await orcaCli(['tab', 'create', '--url', SLACK_URL, '--worktree', 'active'])
+        // No --worktree: the CLI then opens the tab in the workspace you are looking at. (`active`
+        // would resolve from the worker's cwd, Orca's install folder, which is no workspace.)
+        const created = await orcaCli(['tab', 'create', '--url', SLACK_URL])
+        if (created?.browserPageId) {
+          await orcaCli(['tab', 'switch', '--page', created.browserPageId, '--focus'])
+        }
       }
       setTimeout(poll, 1500)
       orca.log('slack.open: done')
       return 'Opened Slack'
     } catch (e) {
       orca.log(`slack.open failed: ${(e as Error).message}`)
+      // The status bar ignores a command's result, so say it where the person will see it.
+      await orca.host
+        .call('notifications.show', { title: 'Could not open Slack', body: (e as Error).message })
+        .catch(() => {})
       return `Could not open Slack: ${(e as Error).message}`
     }
   })

@@ -2,7 +2,7 @@
   "manifestVersion": 2,
   "id": "slack",
   "name": "Slack",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Slack unread count in the status bar, notifications, and a shortcut that opens Slack in Orca's browser.",
   "engines": {
     "orca": ">=1.4.248"
