@@ -1,14 +1,14 @@
-// Polls Orca's browser tabs through the `orca` CLI, shows Slack's unread count in the status bar,
-// notifies when it goes up, and opens or focuses the Slack tab. Uses the Slack web session you are
+// Polls Orca's browser tabs through the `orca` CLI, shows Slack's unread count in the status bar
+// and notifies when it goes up. Uses the Slack web session you are
 // already logged into in Orca's browser, so no Slack token or app is needed.
 import type { OrcaWorkerApi } from 'orca/worker'
 import { execFile } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
-import { SLACK_URL, findSlackTab, unreadFromTitle, type Tab } from './slack'
+import { findSlackTab, unreadFromTitle, type Tab } from './slack'
 
-const POLL_MS = 5000
+const POLL_MS = 3000
 
 // The worker runs inside the Orca app (Electron-as-Node), where a bare `orca` can resolve to the
 // app binary instead of the CLI. Prefer the CLI bundled next to the app, and drop the
@@ -55,7 +55,7 @@ export default function activate(orca: OrcaWorkerApi): void {
       const tab = findSlackTab(await listTabs())
       if (!tab) {
         last = -1
-        await orca.host.call('statusBar.update', { id: 'slack', text: 'Slack', tone: 'neutral', tooltip: 'Open Slack' })
+        await orca.host.call('statusBar.update', { id: 'slack', text: 'Slack', tone: 'neutral', tooltip: 'No Slack tab open in Orca' })
         return
       }
       const unread = unreadFromTitle(tab.title)
@@ -64,7 +64,7 @@ export default function activate(orca: OrcaWorkerApi): void {
           id: 'slack',
           text: unread > 0 ? `Slack ${unread}` : 'Slack',
           tone: unread > 0 ? 'accent' : 'neutral',
-          tooltip: unread > 0 ? `${unread} new in Slack. Click to open` : 'Open Slack',
+          tooltip: unread > 0 ? `${unread} new in Slack` : 'No unread Slack messages',
         })
         if (last >= 0 && unread > last) {
           await orca.host.call('notifications.show', {
@@ -78,33 +78,6 @@ export default function activate(orca: OrcaWorkerApi): void {
       orca.log(`poll failed: ${(e as Error).message}`)
     }
   }
-
-  orca.commands.register('slack.open', async () => {
-    orca.log('slack.open: start')
-    try {
-      const tab = findSlackTab(await listTabs())
-      if (tab) {
-        await orcaCli(['tab', 'switch', '--page', tab.browserPageId, '--worktree', `id:${tab.worktreeId}`, '--focus'])
-      } else {
-        // No --worktree: the CLI then opens the tab in the workspace you are looking at. (`active`
-        // would resolve from the worker's cwd, Orca's install folder, which is no workspace.)
-        const created = await orcaCli(['tab', 'create', '--url', SLACK_URL])
-        if (created?.browserPageId) {
-          await orcaCli(['tab', 'switch', '--page', created.browserPageId, '--focus'])
-        }
-      }
-      setTimeout(poll, 1500)
-      orca.log('slack.open: done')
-      return 'Opened Slack'
-    } catch (e) {
-      orca.log(`slack.open failed: ${(e as Error).message}`)
-      // The status bar ignores a command's result, so say it where the person will see it.
-      await orca.host
-        .call('notifications.show', { title: 'Could not open Slack', body: (e as Error).message })
-        .catch(() => {})
-      return `Could not open Slack: ${(e as Error).message}`
-    }
-  })
 
   void poll()
   timer = setInterval(poll, POLL_MS)

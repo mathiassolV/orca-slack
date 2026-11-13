@@ -1,13 +1,12 @@
 # Slack for Orca
 
-A small Orca plugin for using Slack inside Orca's built-in browser.
+A small Orca plugin that tells you about new Slack messages while you work in Orca.
+Open Slack yourself in Orca's browser (`https://app.slack.com/client`); the plugin watches that tab.
 
 - **Unread count in the status bar.** Shows `Slack N` when your Slack tab has unread items.
 - **Desktop notification** when the count goes up.
-- **Open Slack** from the status bar item, `Ctrl/Cmd+Shift+L`, or the command palette
-  ("Slack: Open in Orca browser"). It focuses your Slack tab, or opens `https://app.slack.com/client`.
 
-No Slack token or Slack app is needed. Every 5 seconds the plugin reads the unread count from the
+No Slack token or Slack app is needed. Every 3 seconds the plugin reads the unread count from the
 title of the Slack tab you are logged into in Orca's browser (`... - 3 new items - Slack`), using
 the `orca tab` CLI.
 

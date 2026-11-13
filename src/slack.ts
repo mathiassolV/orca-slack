@@ -3,8 +3,6 @@
 
 export type Tab = { browserPageId: string; url: string; title: string; worktreeId: string; active?: boolean }
 
-export const SLACK_URL = 'https://app.slack.com/client'
-
 export function findSlackTab(tabs: Tab[]): Tab | undefined {
   const slack = tabs.filter((t) => /^https:\/\/app\.slack\.com\//.test(t.url))
   return slack.find((t) => t.active) ?? slack[0]
